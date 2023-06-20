@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chatting</title>
+	<link rel="stylesheet" href="/css/styles.css" />
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+	<div id="messages">
+		<ul id="message-list"></ul>
+	</div>
+	<form id="form">
+		<input id="message-input" autocomplete="off" />
+		<button>Send message</button>
+	</form>
+	<script>
+		const socket = io();
+		socket.on('connect', () => {
+			const username = prompt('Enter your nickname:', '');
+			socket.emit('set_username', username);
+
+			socket.on('username_taken', () => {
+				alert('Retry');
+				location.reload();
+			});
+
+			$('form').submit((e) => {
+				e.preventDefault();
+				socket.emit('chat message', {
+					text: $('#message-input').val(),
+					sender: username,
+				});
+				$('#message-input').val('');
+				return false;
+			});
+
+			socket.on('chat message', (msg) => {
+				const isCurrentUser = msg.sender === username;
+				const messageContainer = $('<div>').addClass(
+					isCurrentUser ? 'sender' : 'receiver',
+				);
+				const messageElement =$('<span>').addClass('message').text(msg.text);
+					messageContainer.append(messageElement);
+					$('#message-list').append(messageContainer);
+					window.scrollTo(0, document.body.scrollHeight);
+				});
+		});
+	</script>
+</body>
+</html>
